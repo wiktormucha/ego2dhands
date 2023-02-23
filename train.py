@@ -1,9 +1,6 @@
-'''
-File to train models
-'''
 from models.models import CustomHeatmapsModel, EfficientWaterfall
 from utils.trainer import Trainer
-from datasets.FreiHAND import FreiHAND, FreiHAND_albu
+from datasets.FreiHAND import FreiHAND_albu
 from utils.utils import count_parameters, IoULoss
 from config import *
 import matplotlib.pyplot as plt
@@ -17,10 +14,10 @@ import sys
 sys.path.append("../")
 
 
-def main():
-    '''
+def main() -> None:
+    """
     Main function of training pytohn script
-    '''
+    """
 
     config = {
         "data_dir": DATA_DIR,
@@ -31,28 +28,6 @@ def main():
         "device": DEVICE,
         "early_stopping": EARLY_STOPPING
     }
-
-    # train_dataset = FreiHAND(config=config, set_type="train", img_transform = TRAIN_IMG_TRANSFORM, heatmap_transform = TRAIN_HEATMAP_TRANSFORM)
-
-    # train_dataloader = DataLoader(
-    #     train_dataset,
-    #     config["batch_size"],
-    #     shuffle=True,
-    #     drop_last=False,
-    #     num_workers=6,
-    #     pin_memory=True
-    # )
-
-    # val_dataset = FreiHAND(config=config, set_type="val", img_transform= VAL_IMG_TRANSFORM, heatmap_transform= None)
-
-    # val_dataloader = DataLoader(
-    #     val_dataset,
-    #     config["batch_size"],
-    #     shuffle=True,
-    #     drop_last=False,
-    #     num_workers=6,
-    #     pin_memory=True
-    # )
 
     train_dataset = FreiHAND_albu(
         config=config, set_type="train", albumetations=ALBUMENTATION_TRAIN)

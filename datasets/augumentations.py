@@ -125,14 +125,14 @@ class RandomBackground(nn.Module):
         self.files = files
         self.bg_path = bg_path
 
-    def forward(self, img: Image.PIL) -> Image.PIL:
+    def forward(self, img: Image) -> Image:
         """ Function deletes greenscreen background and input random image from givne path
 
         Args:
-            img (Image.PIL): Input image to be augumented
+            img (Image): Input image to be augumented
 
         Returns:
-            Image.PIL: Augumented image
+            Image: Augumented image
         """
 
         # PIL image to nunpy

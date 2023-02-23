@@ -1,22 +1,24 @@
 from config import *
 from utils.utils import heatmaps_to_coordinates
-from utils.metrics import keypoint_pck_accuracy, keypoint_epe, own_keypoint_pck_accuracy, keypoint_auc
-from torch.utils.data import DataLoader, Dataset
-import tqdm
+from utils.metrics import keypoint_pck_accuracy, keypoint_epe, keypoint_auc
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import torch
 sys.path.append("../")
 
 
-def get_bb_w_and_h(gt_keypoints, bb_factor=1):
-    '''
-    inputs:
-        gt_keypoints shape (batch_size, 2)
+def get_bb_w_and_h(gt_keypoints: np.array, bb_factor: int = 1) -> np.array:
+    """
+    Returns width and height of bounding box
 
-    returns:
-        normalize (batch_size, (bb_width, bb_height))
-    '''
+    Args:
+        gt_keypoints (np.array): GT keypoints
+        bb_factor (int, optional): Bounding box margin factor. Defaults to 1.
+
+    Returns:
+        np.array: (batch_size, (bb_width, bb_height))
+    """
 
     normalize = np.zeros((gt_keypoints.shape[0], 2))
 
@@ -34,7 +36,18 @@ def get_bb_w_and_h(gt_keypoints, bb_factor=1):
     return normalize
 
 
-def batch_epe_calculation(pred_keypoints, true_keypoints, treshold=0.2, mask=None, normalize=None):
+def batch_epe_calculation(pred_keypoints: np.array, true_keypoints: np.array, mask: np.array = None) -> float:
+    """
+    Calculates End Point Error (EPE) for a batch in pixels.
+
+    Args:
+        pred_keypoints (np.array): Predicted keypoints.
+        true_keypoints (np.array): GT keypoints
+        mask (np.array, optional): Mask with information which points to hide from calculation (0 skipped; 1 used). Defaults to None.
+
+    Returns:
+        float: EPE
+    """
 
     if mask == None:
         mask = np.ones((true_keypoints.shape[0], 21), dtype=int)
@@ -45,7 +58,20 @@ def batch_epe_calculation(pred_keypoints, true_keypoints, treshold=0.2, mask=Non
     return epe * MODEL_IMG_SIZE
 
 
-def batch_auc_calculation(pred_keypoints, true_keypoints, num_step=20, mask=None, normalize=None):
+def batch_auc_calculation(pred_keypoints: np.array, true_keypoints: np.array, num_step: int = 20, mask: np.array = None, normalize: np.array = None):
+    """
+    Calculates Area Under the Curve for a batch.
+
+    Args:
+        pred_keypoints (np.array): Predicted keypoints.
+        true_keypoints (np.array): GT keypoints
+        num_step (int, optional): How dense is treshold. Defaults to 20.
+        mask (np.array, optional): Mask with information which points to hide from calculation (0 skipped; 1 used). Defaults to None.
+        normalize (np.array, optional): Width and height to normalise. Defaults to None.
+
+    Returns:
+        float: AUC
+    """
 
     if mask == None:
         mask = np.ones((true_keypoints.shape[0], 21), dtype=int)
@@ -59,7 +85,20 @@ def batch_auc_calculation(pred_keypoints, true_keypoints, num_step=20, mask=None
     return auc
 
 
-def batch_pck_calculation(pred_keypoints, true_keypoints, treshold=0.2, mask=None, normalize=None):
+def batch_pck_calculation(pred_keypoints: np.array, true_keypoints: np.array, treshold: float = 0.2, mask: np.array = None, normalize: np.array = None) -> float:
+    """
+    Calculates PCK for a batch.
+
+    Args:
+        pred_keypoints (np.array): Predicted keypoints.
+        true_keypoints (np.array): GT keypoints
+        treshold (float, optional): PCK treshold. Defaults to 0.2.
+        mask (np.array, optional): Mask with information which points to hide from calculation (0 skipped; 1 used). Defaults to None.
+        normalize (np.array, optional): _description_. Defaults to None.
+
+    Returns:
+        float: PCK
+    """
 
     if mask == None:
         mask = np.ones((true_keypoints.shape[0], 21), dtype=int)
@@ -73,15 +112,15 @@ def batch_pck_calculation(pred_keypoints, true_keypoints, treshold=0.2, mask=Non
     return avg_acc
 
 
-def show_batch_predictions(batch_data, model):
+def show_batch_predictions(batch_data: dict, model: torch.nn.Module) -> None:
     """
-    Visualizes image, image with actual keypoints and
-    image with predicted keypoints.
-    Finger colors are in COLORMAP.
-    Inputs:
-    - batch data is batch from dataloader
-    - model is trained model
+    Visualizes image, image with actual keypoints and image with predicted keypoints. Finger colors are in COLORMAP.
+
+    Args:
+        batch_data (dict): Batch from dataloader
+        model (torch.nn.Module): Trained model
     """
+
     inputs = batch_data["image"]
     true_keypoints = batch_data["keypoints"].numpy()
     batch_size = true_keypoints.shape[0]
@@ -130,14 +169,14 @@ def show_batch_predictions(batch_data, model):
     plt.tight_layout()
 
 
-def save_batch_predictions(batch_data, model, saving_name):
+def save_batch_predictions(batch_data: dict, model: torch.nn.Module, saving_name: str) -> None:
     """
-    Visualizes image, image with actual keypoints and
-    image with predicted keypoints.
-    Finger colors are in COLORMAP.
-    Inputs:
-    - batch data is batch from dataloader
-    - model is trained model
+    Visualizes image, image with actual keypoints and image with predicted keypoints. Finger colors are in COLORMAP.
+
+    Args:
+        batch_data (dict): Batch from dataloader
+        model (torch.nn.Module): Trained model
+        saving_name (str): Name of saved file.
     """
     inputs = batch_data["image"]
     true_keypoints = batch_data["keypoints"].numpy()

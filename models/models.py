@@ -1,15 +1,22 @@
-'''
-This file contains network models that are ready to be inported to other pytohn files 
-'''
 import torch
 import torch.nn as nn
 from config import MODEL_NEURONS
-from models.heads import SimpleHead5_small, SimpleHead_FPN, SimpleHead5, PredictionHead, SimpleHead_trans, Waterfall, DeconvolutionLayer, Encoder
+from models.heads import SimpleHead_FPN, SimpleHead5, PredictionHead, SimpleHead_trans, Waterfall, DeconvolutionLayer, Encoder
 from models.backbones import BackboneModel_FPN, BackboneModel, ConvBlock, HighLowFeauturesBck
 
 
 class EfficientWaterfall(nn.Module):
-    def __init__(self, out_channels=21) -> None:
+    """
+    EffHandWfall architecture model
+    """
+
+    def __init__(self, out_channels: int = 21) -> None:
+        """
+        Initialisation
+
+        Args:
+            out_channels (int, optional): _description_. Defaults to 21.
+        """
         super().__init__()
 
         self.backbone = HighLowFeauturesBck()
@@ -20,20 +27,24 @@ class EfficientWaterfall(nn.Module):
         self.point_conv = nn.Conv2d(
             in_channels=288, out_channels=out_channels, kernel_size=1, stride=1)
         self.prob = nn.Sigmoid()
-        # self.norm1 = nn.BatchNorm2d(288)
-        # self.norm2 = nn.BatchNorm2d(21)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         feautures = self.backbone(x)
         out_high = self.waterfall(feautures['high_feautures'])
         out_high = self.encoder(out_high)
         all_feautures = torch.cat(
             [out_high, feautures['low_feautures']], dim=1)
-        # all_feautures = self.norm1(all_feautures)
         all_feautures = self.deconv(all_feautures)
         out = self.point_conv(all_feautures)
-        # out = self.norm2(out)
         out = self.prob(out)
 
         return out
@@ -44,13 +55,21 @@ class CustomHeatmapsModel_FPN(nn.Module):
     Model with feature stacking form different level during extracting
     '''
 
-    def __init__(self, in_channel, out_channel) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
         self.backbone = BackboneModel_FPN()
         self.head = SimpleHead_FPN(1984, 21)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         bck = self.backbone(x)
         out = self.head(bck)
@@ -59,15 +78,32 @@ class CustomHeatmapsModel_FPN(nn.Module):
 
 
 class CustomHeatmapsModel(nn.Module):
+    """
+    EffHandWSimple model architecture
+    """
 
-    def __init__(self, in_channel, out_channel) -> None:
+    def __init__(self, in_channel: int = 1280, out_channel: int = 21) -> None:
+        """
+        Initialisation
+
+        Args:
+            in_channel (int, optional): No. of input channels. Defaults to 1280.
+            out_channel (int, optional): No. of output channels. Defaults to 21.
+        """
         super().__init__()
 
         self.backbone = BackboneModel()
-        self.head = SimpleHead5(1280, 21)
-        # self.head = SimpleHead5_small(1280, 21)
+        self.head = SimpleHead5(in_channel, out_channel)
 
     def forward(self, x):
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         bck = self.backbone(x)
         out = self.head(bck)
@@ -77,15 +113,30 @@ class CustomHeatmapsModel(nn.Module):
 
 class CustomHeatmapsModel_trans(nn.Module):
 
-    def __init__(self, in_channel, out_channel) -> None:
+    def __init__(self, in_channel: int = 1280, out_channel: int = 21) -> None:
+        """
+        Initialisation
+
+        Args:
+            in_channel (int, optional): No. of input channels. Defaults to 1280.
+            out_channel (int, optional): No. of output channels. Defaults to 21.
+        """
         super().__init__()
 
         self.backbone = BackboneModel()
         self.att = torch.nn.MultiheadAttention(
-            embed_dim=1280, num_heads=2, batch_first=True)
-        self.head = SimpleHead_trans(1280, 21)
+            embed_dim=in_channel, num_heads=2, batch_first=True)
+        self.head = SimpleHead_trans(in_channel, out_channel)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         bck = self.backbone(x)
         re = bck.reshape(x.shape[0], 1280)
@@ -98,7 +149,14 @@ class CustomHeatmapsModel_trans(nn.Module):
 
 class BaselineFutureStaking(nn.Module):
 
-    def __init__(self, in_channel, out_channel):
+    def __init__(self, in_channel: int, out_channel: int = 21) -> None:
+        """
+        Initialisation
+
+        Args:
+            in_channel (int, optional): No. of input channels. 
+            out_channel (int, optional): No. of output channels. Defaults to 21.
+        """
         super().__init__()
 
         self.conv_down1 = ConvBlock(in_channel, MODEL_NEURONS)
@@ -119,7 +177,15 @@ class BaselineFutureStaking(nn.Module):
 
         self.head = PredictionHead(input_dim=496, output_dim=out_channel)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
         conv_d1 = self.conv_down1(x)
         conv_d2 = self.conv_down2(self.maxpool(conv_d1))
         conv_d3 = self.conv_down3(self.maxpool(conv_d2))

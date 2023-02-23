@@ -1,6 +1,3 @@
-''' 
-File with functiosn for hand detection
-'''
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -9,20 +6,48 @@ from config import *
 from utils.utils import project_points_3D_to_2D
 
 
-def pil_to_cv(pil_image):
+def pil_to_cv(pil_image: Image) -> cv2:
+    """
+    Converts PIL image to OpenCV
+
+    Args:
+        pil_image (Image): Input in PIL format
+    Returns:
+        cv2: Output in cv2/np.array format
+    """
     open_cv_image = np.array(pil_image)
     # Convert RGB to BGR
     open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
     return open_cv_image
 
 
-def cv_to_pil(cv_image):
+def cv_to_pil(cv_image: cv2) -> Image:
+    """
+    Converts OpenCV image to PIL format
+
+    Args:
+        cv_image (cv2): Input in cv2/np.array 
+
+    Returns:
+        Image: Output in PIL format
+    """
+    # Convert BGR to RGB
     cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
     pil_image = Image.fromarray(cv_image)
     return pil_image
 
 
-def crop_image(image, bbox):
+def crop_image(image: cv2, bbox: dict) -> cv2:
+    """
+    Segments givven bounding box from input image.
+
+    Args:
+        image (cv2): Input image
+        bbox (dict): Bounding box to segment image
+
+    Returns:
+        cv2: Segmented image
+    """
 
     cropped_image = image[bbox['y_min']:bbox['y_max'], bbox['x_min']:bbox['x_max']]
 
@@ -41,9 +66,18 @@ def crop_image(image, bbox):
     return cropped_image
 
 
-def gt_to_segments(gt, bbox):
-    '''
+def gt_to_segments(gt: np.array, bbox: dict) -> np.array:
+    """
     Function applyes segmentic keypoints from main image using given boundigboxes
+    Args:
+        gt (np.array): Ground truth keypoints
+        bbox (dict): Bounding box
+
+    Returns:
+        np.array: Transformed GT keypoints
+    """
+    '''
+    
     '''
     gt[:, 0] = gt[:, 0] - bbox['x_min']
     gt[:, 1] = gt[:, 1] - bbox['y_min']
@@ -51,17 +85,37 @@ def gt_to_segments(gt, bbox):
     return gt
 
 
-def compress_gt_pts(gt, img_dimm):
+def compress_gt_pts(gt: np.array, img_dimm: int) -> np.array:
+    """
+    Normalises GT points to <0,1>
+
+    Args:
+        gt (np.array): Ground truth keypoints
+        img_dimm (int): Image width/height
+    Returns:
+        np.array: Normalised GT keypoints
+    """
 
     compressed_gt = gt / img_dimm
 
     return compressed_gt
 
 
-def get_bb(hand_info, hand_landmarks, w, h, factor=BB_FACTOR, mirror=False):
-    '''
+def get_bb(hand_info: dict, hand_landmarks: dict, w: int, h: int, factor: int = BB_FACTOR, mirror: bool = False) -> dict:
+    """
     Function to get bounding boxes from mediapipe predictions.
-    '''
+
+    Args:
+        hand_info (dict): _description_
+        hand_landmarks (dict): _description_
+        w (int): Width
+        h (int): Height
+        factor (int, optional): Factor adding margin to boundig box. Defaults to BB_FACTOR.
+        mirror (bool, optional): Flag to flip left with right hand. Defaults to False.
+
+    Returns:
+        dict: _description_
+    """
 
     x_max = 0
     y_max = 0
@@ -123,7 +177,17 @@ def get_bb(hand_info, hand_landmarks, w, h, factor=BB_FACTOR, mirror=False):
     return hand_dict
 
 
-def get_hands_bb(img, hands):
+def get_hands_bb(img: np.array, hands) -> list:
+    """
+    Function detecitng hands and returning bounding boxes
+
+    Args:
+        img (np.array): Input image
+        hands (_type_): Hand model
+
+    Returns:
+        list: List of bounding boxes
+    """
     frame = img
     h, w, c = frame.shape
     framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -141,10 +205,22 @@ def get_hands_bb(img, hands):
     return hand_bb_list
 
 
-def get_hands_img(img, gt_pts, hand_model, cam_instr):
-    '''
+def get_hands_img(img: np.array, gt_pts: np.array, hand_model, cam_instr: np.array) -> dict:
+    """
     This function segments hands from main image and return dicitonary with image hand and label (left/right)
-    '''
+
+    Args:
+        img (np.array): Input image with two hands
+        gt_pts (np.array): GT points
+        hand_model (_type_): Hand model to predict hands in the image
+        cam_instr (np.array): Camera intrinsic to transform image
+
+    Returns:
+        dict:   -'hands_seg': Images of segmented hands
+                -'gt': gt, GT keypoints
+                -'hand_type': Label Left/Right
+                -'hands_bb': List of bounding boxes
+    """
 
     img = pil_to_cv(img)
 

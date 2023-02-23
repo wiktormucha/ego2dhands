@@ -17,6 +17,7 @@ TRAIN_DATASET_MEANS = [0.4532, 0.4522, 0.4034]
 TRAIN_DATASET_STDS = [0.2218, 0.2186, 0.2413]
 DATASET_MEANS = [0.3950, 0.4323, 0.2954]
 DATASET_STDS = [0.1966, 0.1734, 0.1836]
+ONLY_GREENSCREEN_IMAGES = False
 
 
 # Training parameters
@@ -43,29 +44,6 @@ COLORMAP = {
     "little": {"ids": [0, 17, 18, 19, 20], "color": "r"},
 }
 
-COLORMAP_GT = {
-    "thumb": {"ids": [0, 1, 2, 3, 4], "color": "g"},
-    "index": {"ids": [0, 5, 6, 7, 8], "color": "c"},
-    "middle": {"ids": [0, 9, 10, 11, 12], "color": "b"},
-    "ring": {"ids": [0, 13, 14, 15, 16], "color": "m"},
-    "little": {"ids": [0, 17, 18, 19, 20], "color": "r"},
-}
-
-
-# COLORMAP_GT = {
-#     "thumb": {"ids": [0, 1, 2, 3, 4], "color": "lightgreen"},
-#     "index": {"ids": [0, 5, 6, 7, 8], "color": "azure"},
-#     "middle": {"ids": [0, 9, 10, 11, 12], "color": "cornflowerblue"},
-#     "ring": {"ids": [0, 13, 14, 15, 16], "color": "plum"},
-#     "little": {"ids": [0, 17, 18, 19, 20], "color": "lightcoral"},
-# }
-# COLORMAP_GT = {
-#     "thumb": {"ids": [0, 1, 2, 3, 4], "color": "lightgreen"},
-#     "index": {"ids": [0, 5, 6, 7, 8], "color": "azure"},
-#     "middle": {"ids": [0, 9, 10, 11, 12], "color": "cornflowerblue"},
-#     "ring": {"ids": [0, 13, 14, 15, 16], "color": "plum"},
-#     "little": {"ids": [0, 17, 18, 19, 20], "color": "lightcoral"},
-# }
 # Image augumentations
 TRAIN_IMG_TRANSFORM = transforms.Compose(
     [

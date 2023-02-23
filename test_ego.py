@@ -21,18 +21,10 @@ from utils.utils import project_points_3D_to_2D, heatmaps_to_coordinates
 from datasets.h2o import H2O_Dataset
 import pandas as pd
 import tqdm
+from datasets.h2o import cam_instr, get_instr
+from utils.egocentric import run_model_on_hands
+
 IMAGE_N = 10  # Index of image to see
-
-
-def get_instr(arr):
-    cam = np.zeros((3, 3))
-    cam[0][0] = arr[0]
-    cam[0][2] = arr[2]
-    cam[1][1] = arr[1]
-    cam[1][2] = arr[3]
-    cam[2][2] = 1
-
-    return cam
 
 
 config = {'device': 3,
@@ -60,84 +52,19 @@ config = {'device': 3,
 # hand_pose_mano = item['hand_pose_mano']
 # cam_instr = item['cam_instr']
 
-def run_model_on_hands(model, imgs, gts, hand_label):
+def get_testing_images(data_dir: str) -> dict:
+    """
+    Returns testing images from H2O dataset.
 
-    # imgs = hands_dict['hands_seg']
-    # gts = hands_dict['gt']
-    # hand_label = hands_dict['hand_type']
+    Args:
+        data_dir (str): Main folder path
 
-    # print(hands_dict)
-    # apply normalization
-
-    # print(type(imgs[0]))
-    # print(type(imgs[1])    )
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Resize(MODEL_IMG_SIZE),
-            transforms.Normalize(
-                mean=TRAIN_DATASET_MEANS, std=TRAIN_DATASET_STDS)
-        ]
-    )
-
-    # transform first hand
-    # if hand_label[0] == 'Left':
-    #     print('flipping to right ', 0)
-    # imgs[0] = np.flip(imgs[0], axis = 1)
-    # img0 = ImageOps.mirror(imgs[0])
-    # else:
-    #  gts[0] = np.flip(gts[0], axis = 1)
-    # img0 = imgs[0]
-
-    # if hand_label[1] == 'Left':
-    # imgs[1] = np.flip(imgs[1], axis = 1)
-
-    # img1 = ImageOps.mirror(imgs[1])
-    # else:
-    img0 = imgs[0]
-    img1 = imgs[1]
-
-    # plt.imshow(img1)
-
-    img0 = transform(img0)
-    img1 = transform(img1)
-
-    flip = transforms.RandomHorizontalFlip(p=1)
-    # transform second hand
-
-    # if hand_label[1] == 'Left':
-    #     imgs[1] = np.flip(imgs[1], axis = 1)
-    # gts[1] = np.flip(gts[1], axis = 1)
-
-    # inpt2 = transform(imgs[0])
-    # if right
-    # print(hand_label[0])
-
-    inpt = torch.stack([img0, img1], dim=0)
-
-    pred_heatmaps = model(inpt)
-
-    # pred_heatmaps = pred_heatmaps.detach().numpy()
-
-    # print(type(pred_heatmaps[0]))
-    # left = flip(pred_heatmaps[0])
-    left = pred_heatmaps[0]
-
-    right = pred_heatmaps[1]
-
-    heatmaps = torch.stack([left, right], dim=0)
-    # print(heatmaps.shape)
-
-    # heatmaps = heatmaps
-    pred_keypoints = heatmaps_to_coordinates(heatmaps.detach().numpy())
-
-    # pred_keypoints[0] = np.flip(pred_keypoints[0], axis = 1)
-    # pred_keypoints[0]
-
-    return pred_keypoints
-
-
-def get_testing_images(data_dir):
+    Returns:
+        dict:   -'img_paths': img_paths,
+                -'cam_pose': cam_pose,
+                -'hand_pose': hand_pose,
+                -'cam_instr': cam_instr
+    """
 
     # image_dir = os.path.join(data_dir, "subject1", 'h1', '1', 'cam4', 'rgb')
     image_dir = os.path.join(data_dir, "subject6", 's2', '3', 'cam4', 'rgb')

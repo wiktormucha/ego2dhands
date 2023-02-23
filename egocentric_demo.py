@@ -14,11 +14,11 @@ sys.path.append("../")
 IMAGE_N = 10  # Index of image to see
 
 
-def main(config):
+def main(config: dict):
     """Main function to run egocentric prediction
 
     Args:
-        config (_type_): Dictionatry containing config information
+        config (dict): Dictionatry containing config information
     """
 
     dataset = H2O_Dataset(config)

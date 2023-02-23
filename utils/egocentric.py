@@ -4,19 +4,21 @@ from torchvision import transforms
 import torch
 import sys
 import copy as copy
+import numpy as np
 from PIL import ImageOps
 sys.path.append("../")
 
 
-def run_model_on_hands(model, imgs):
-    """Function to run hand predicotr in egocentric data
+def run_model_on_hands(model: torch.nn.Module, imgs: list) -> np.array:
+    """
+    Function to run hand predicotr in egocentric data
 
     Args:
-        model (_type_): predicting model
-        imgs (_type_): left and right hands cropped images
+        model (torch.nn.Module): Prediction model for a single hand.
+        imgs (list): Left and right hands segmented images.
 
     Returns:
-        _type_: predicted keypoints in range <0.1>
+        np.array: predicted keypoints
     """
 
     transform = transforms.Compose(
@@ -28,38 +30,32 @@ def run_model_on_hands(model, imgs):
         ]
     )
 
-    # Flip left to right for dummy model
-    img0 = ImageOps.mirror(imgs[0])
+    img0 = imgs[0]
     img1 = imgs[1]
+
     img0 = transform(img0)
     img1 = transform(img1)
-    flip = transforms.RandomHorizontalFlip(p=1)
     inpt = torch.stack([img0, img1], dim=0)
-
-    # Predict
     pred_heatmaps = model(inpt)
-
-    # Flip prediction back to real axis
-    left = flip(pred_heatmaps[0])
+    left = pred_heatmaps[0]
     right = pred_heatmaps[1]
     heatmaps = torch.stack([left, right], dim=0)
-
-    # Return coordinates
     pred_keypoints = heatmaps_to_coordinates(heatmaps.detach().numpy())
 
     return pred_keypoints
 
 
-def preds_to_full_image(predictions, hands_bb, scale):
-    """Function taking predictions and moving coordinates to full size image with two hands
+def preds_to_full_image(predictions: np.array, hands_bb: list, scale: list) -> list:
+    """
+    Function taking predictions and moving coordinates to full size image with two hands
 
     Args:
-        predictions (_type_): left and right hand prediction
-        hands_bb (_type_): list of bb of hands
-        scale (_type_): size of imaes used for prediction
+        predictions (np.array): left and right hand prediction
+        hands_bb (list): List of bb of hands
+        scale (list): Size of imaes used for prediction
 
     Returns:
-        _type_: predictions scaled to full image
+        list: Points transformed to input image
     """
 
     full_scale_preds = []

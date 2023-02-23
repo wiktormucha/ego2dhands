@@ -1,21 +1,22 @@
-'''
-File to store models' heads
-'''
-
 import torch
 import torch.nn as nn
-import torchvision
-
-from torchvision.models import efficientnet_v2_s, EfficientNet_V2_S_Weights
-import numpy as np
+from backbones import ConvBlock
 
 
 class DeconvolutionLayer(nn.Module):
-    '''
+    """
     Class for deconvolutional layer 
-    '''
+    """
 
-    def __init__(self, in_channels, out_channels, kernel_size=2, stride=2) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 2, stride: int = 2) -> None:
+        """_summary_
+
+        Args:
+            in_channels (int): No. of input channels
+            out_channels (int):  No. of output channels
+            kernel_size (int, optional): Kernel size. Defaults to 2.
+            stride (int, optional): Stride size. Defaults to 2.
+        """
         super().__init__()
 
         self.deconv = nn.Sequential(nn.BatchNorm2d(in_channels),
@@ -23,13 +24,31 @@ class DeconvolutionLayer(nn.Module):
                                         in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride),
                                     )
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
         out = self.deconv(x)
         return out
 
 
 class Encoder(nn.Module):
-    def __init__(self, in_ch) -> None:
+    """
+    Encoder for waterfall architecture
+    """
+
+    def __init__(self, in_ch: int) -> None:
+        """
+        Initialisation
+
+        Args:
+            in_ch (int): No. of input channels.
+        """
         super().__init__()
 
         self.deconv1 = DeconvolutionLayer(in_channels=int(
@@ -37,7 +56,15 @@ class Encoder(nn.Module):
         self.deconv2 = DeconvolutionLayer(in_channels=int(
             in_ch/4), out_channels=int(in_ch/16), kernel_size=4, stride=4)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         out = self.deconv1(x)
         out = self.deconv2(out)
@@ -45,7 +72,14 @@ class Encoder(nn.Module):
 
 
 class Waterfall(nn.Module):
+    """
+    Waterfall module with atrous convolutions
+    """
+
     def __init__(self) -> None:
+        """
+        Initialisation
+        """
         super().__init__()
 
         self.l1 = nn.Conv2d(
@@ -54,38 +88,24 @@ class Waterfall(nn.Module):
             in_channels=1280, out_channels=1280, kernel_size=2, dilation=2)
         self.l3 = nn.MaxPool2d(2)
         self.pool2 = nn.MaxPool2d(2)
-        # self.norm = nn.BatchNorm2d(3840)
-        # self.in_norm = nn.BatchNorm2d(1280)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
 
-        # x = self.in_norm(x)
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
+
         out1 = self.pool2(self.l1(x))
         out2 = self.l2(x)
         out3 = self.l3(x)
 
         final_out = torch.cat([out1, out2, out3], dim=1)
-        # final_out = self.norm(final_out)
 
         return final_out
-
-
-class ConvBlock(nn.Module):
-    def __init__(self, in_depth, out_depth):
-        super().__init__()
-        self.double_conv = nn.Sequential(
-            nn.BatchNorm2d(in_depth),
-            nn.Conv2d(in_depth, out_depth, kernel_size=3,
-                      padding=1, bias=False),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(out_depth),
-            nn.Conv2d(out_depth, out_depth, kernel_size=3,
-                      padding=1, bias=False),
-            nn.ReLU(inplace=True),
-        )
-
-    def forward(self, x):
-        return self.double_conv(x)
 
 
 class SimpleHead_FPN(nn.Module):
@@ -104,7 +124,15 @@ class SimpleHead_FPN(nn.Module):
 
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         x = self.deconv1(x)
         x = self.final(x)
@@ -114,7 +142,18 @@ class SimpleHead_FPN(nn.Module):
 
 
 class SimpleHead5(nn.Module):
-    def __init__(self, in_channels, out_channels) -> None:
+    """
+    Simple head containing of 5 transposed layers
+    """
+
+    def __init__(self, in_channels: int, out_channels: int) -> None:
+        """
+        Initialisation
+
+        Args:
+            in_channels (int): No. of input channels.
+            out_channels (int): No. of output channels.
+        """
         super().__init__()
 
         self.deconv1 = DeconvolutionLayer(
@@ -129,7 +168,15 @@ class SimpleHead5(nn.Module):
 
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         x = self.deconv1(x)
         x = self.deconv2(x)
@@ -142,35 +189,19 @@ class SimpleHead5(nn.Module):
         return x
 
 
-class SimpleHead5_small(nn.Module):
-    def __init__(self, in_channels, out_channels) -> None:
-        super().__init__()
-
-        self.deconv1 = DeconvolutionLayer(in_channels=int(
-            in_channels), out_channels=int(in_channels/2), kernel_size=4, stride=4)
-        self.deconv2 = DeconvolutionLayer(in_channels=int(
-            in_channels/2), out_channels=int(in_channels/4), kernel_size=4, stride=4)
-        self.deconv3 = DeconvolutionLayer(in_channels=int(
-            in_channels/4), out_channels=int(in_channels/8), kernel_size=4, stride=4)
-
-        self.final = torch.nn.Conv2d(in_channels=int(
-            in_channels/8), out_channels=out_channels, kernel_size=1)
-
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-
-        x = self.deconv1(x)
-        x = self.deconv2(x)
-        x = self.deconv3(x)
-        x = self.final(x)
-        x = self.sigmoid(x)
-
-        return x
-
-
 class SimpleHead_trans(nn.Module):
-    def __init__(self, in_channels, out_channels) -> None:
+    """
+    Simple head for trans model.
+    """
+
+    def __init__(self, in_channels: int, out_channels: int) -> None:
+        """
+        Initialisation
+
+        Args:
+            in_channels (int): No. of input channels.
+            out_channels (int): No. of output channels.
+        """
         super().__init__()
 
         self.deconv1 = torch.nn.ConvTranspose2d(in_channels=in_channels, out_channels=256, kernel_size=2, stride=2,
@@ -189,17 +220,23 @@ class SimpleHead_trans(nn.Module):
 
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         x = self.deconv1(x)
-
         x = self.deconv2(x)
         x = self.deconv3(x)
         x = self.deconv4(x)
         x = self.deconv5(x)
 
         x = self.final(x)
-
         x = self.sigmoid(x)
 
         return x
@@ -207,20 +244,33 @@ class SimpleHead_trans(nn.Module):
 
 class PredictionHead(nn.Module):
     '''
-    Baseline head model
+    Baseline head model generating heatmaps
     '''
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim: int, output_dim: int) -> None:
+        """
+        Initilisation
+
+        Args:
+            input_dim (int): Input dimenssion
+            output_dim (int): Output dimenssion
+        """
         super().__init__()
 
-        self.convup1 = ConvBlock(1280, output_dim)
-
+        self.convup1 = ConvBlock(input_dim, output_dim)
         self.prob_out = nn.Sigmoid()
-
         self.upsample128 = nn.Upsample(
             scale_factor=128, mode="bilinear", align_corners=False)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         x = self.convup1(self.upsample128(x))
 
@@ -229,14 +279,32 @@ class PredictionHead(nn.Module):
 
 
 class PredictionHeadPoints(nn.Module):
+    """
+    Simple regression head to predict 2D points
+    """
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim: int, output_dim: int) -> None:
+        """
+        Initialisation
+
+        Args:
+            input_dim (int): Input size
+            output_dim (int): No. of points to predict
+        """
         super().__init__()
 
         self.norm = nn.BatchNorm2d(input_dim)
         self.regression = nn.Linear(input_dim, output_dim)
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Forward pass
+
+        Args:
+            x (torch.tensor): Input tensor
+        Returns:
+            torch.tensor: Output tensor
+        """
 
         self.norm(x)
         x = torch.squeeze(x)

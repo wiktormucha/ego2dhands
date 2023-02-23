@@ -22,31 +22,15 @@ def own_distances(preds, targets, mask, normalize):
             If target keypoints are missing, the distance is -1.
     """
     N, K, _ = preds.shape
-    # print('Batch: ', N)
-    # print('N_keypoints: ', K)
-    # set mask=0 when normalize==0
     _mask = mask.copy()
     _mask[np.where((normalize == 0).sum(1))[0], :] = False
     distances = np.full((N, K), -1, dtype=np.float32)
-    # print('calc_dust0:', distances)
-    # handle invalid values
     normalize[np.where(normalize <= 0)] = 1e6
-    # print('Mask: ', _mask)
-    # distances[_mask] = np.linalg.norm(
-    #     ((preds - targets) / normalize[:, None, :])[_mask], axis=-1)
-
-    # distances[_mask] = (preds - targets)
     own_dist = preds - targets
-
     arr2 = np.square(own_dist)
-    # print(arr2.shape)
     h2 = arr2.sum(axis=2)
-    # print(h2.shape)
     dist = np.sqrt(h2)
-    # print(dist.shape)
-    # print('Own: ', own_dist)
-    # print('Own_shape: ', own_dist.shape)
-    # print('calc_dust:', distances)
+
     return dist
 
 
@@ -71,28 +55,16 @@ def _calc_distances(preds, targets, mask, normalize):
             If target keypoints are missing, the distance is -1.
     """
     N, K, _ = preds.shape
-    # print('Batch: ', N)
-    # print('N_keypoints: ', K)
-    # set mask=0 when normalize==0
+
     _mask = mask.copy()
     _mask[np.where((normalize == 0).sum(1))[0], :] = False
     distances = np.full((N, K), -1, dtype=np.float32)
-    # print('calc_dust0:', distances)
-    # handle invalid values
+
     normalize[np.where(normalize <= 0)] = 1e6
     distances[_mask] = np.linalg.norm(
         ((preds - targets) / 1)[_mask], axis=-1)
 
-    # distances[_mask] = np.linalg.norm(
-    #     ((preds - targets) / normalize[:, None, :])[_mask], axis=-1)
-
-    own_dist = abs(preds - targets)
-    # print('Own: ', own_dist)
-    # print('Own: ', own_dist.shape)
-    # print('calc_dust:', distances)
-    # print('Norm: ', normalize[:, None, :])
     return distances.T
-    return own_dist
 
 
 def _distance_acc(distances, thr=0.5):
@@ -146,11 +118,8 @@ def own_keypoint_pck_accuracy(pred, gt, mask, thr, normalize):
         - avg_acc (float): Averaged accuracy across all keypoints.
         - cnt (int): Number of valid keypoints.
     """
-    # distances = _calc_distances(pred, gt, mask, normalize)
     distances = own_distances(pred, gt, mask, normalize)
-    # print('Distances: ', distances)
     acc = np.array([_distance_acc(d, thr) for d in distances])
-    # print(acc)
     valid_acc = acc[acc >= 0]
     cnt = len(valid_acc)
     avg_acc = valid_acc.mean() if cnt > 0 else 0
@@ -187,14 +156,10 @@ def keypoint_pck_accuracy(pred, gt, mask, thr, normalize):
         - avg_acc (float): Averaged accuracy across all keypoints.
         - cnt (int): Number of valid keypoints.
     """
-    # distances = _calc_distances(pred, gt, mask, normalize)
     distances = own_distances(pred, gt, mask, normalize)
-    # print('Distances: ', distances)
     bb_width = normalize[:, 0]
-    # *bb_width[idx]
     acc = np.array([_distance_acc(d, thr*bb_width[idx])
                    for idx, d in enumerate(distances)])
-    # print(acc.shape)
     valid_acc = acc[acc >= 0]
     cnt = len(valid_acc)
     avg_acc = valid_acc.mean() if cnt > 0 else 0
@@ -219,20 +184,11 @@ def keypoint_epe(pred, gt, mask):
         float: Average end-point error.
     """
 
-    # distances = _calc_distances(
-    #     pred, gt, mask,
-    #     np.ones((pred.shape[0], pred.shape[2]), dtype=np.float32))
-
     distances = own_distances(
         pred, gt, mask,
         np.ones((pred.shape[0], pred.shape[2]), dtype=np.float32))
-    # print('Shape of distances: ', distances.shape)
     distance_valid = distances[distances != -1]
-    # print('distance: ', distances)
-    # print('distance_valid: ', distance_valid)
-    # print(distances.sum())
-    # print(distance_valid.sum())
-    # print(max(1, len(distance_valid)))
+
     return distance_valid.sum() / max(1, len(distance_valid))
 
 
@@ -255,10 +211,9 @@ def keypoint_auc(pred, gt, mask, normalize, num_step=20):
     Returns:
         float: Area under curve.
     """
-    # print('Normalize: ', normalize.shape, ' - ', normalize)
-    nor = np.tile(np.array([[normalize, normalize]]), (pred.shape[0], 1))
-    # print('Nor: ', nor)
-    # print('Nor: ', nor.shape, ' - ', nor)
+
+    # nor = np.tile(np.array([[normalize, normalize]]), (pred.shape[0], 1))
+
     x = [1.0 * i / num_step for i in range(num_step)]
     y = []
     for thr in x:
