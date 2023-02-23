@@ -3,6 +3,8 @@
 
   Repository contains code for *EffHandWfall* model for single hand pose description and adoption to egocentric perspective. 
 
+> To get model weights contact me in private.
+
 List of files:
 
  
