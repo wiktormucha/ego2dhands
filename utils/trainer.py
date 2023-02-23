@@ -35,13 +35,13 @@ class Trainer:
         self.best_val_loss = 100000
         self.grad_clip = grad_clip
 
-    def train(self, train_dataloader: torch.utils.data.Dataloader, val_dataloader: torch.utils.data.Dataloader) -> torch.nn.Module:
+    def train(self, train_dataloader: torch.utils.data.DataLoader, val_dataloader: torch.utils.data.DataLoader) -> torch.nn.Module:
         """
         Training loop
 
         Args:
-            train_dataloader (torch.utils.data.Dataloader): Training dataloader
-            val_dataloader (torch.utils.data.Dataloader): Validation dataloader
+            train_dataloader (torch.utils.data.DataLoader): Training dataloader
+            val_dataloader (torch.utils.data.DataLoader): Validation dataloader
         Returns:
             torch.nn.Module: Trained model
         """
@@ -94,12 +94,12 @@ class Trainer:
         torch.save(self.model.state_dict(), f'{EXPERIMENT_NAME}_final')
         return self.model
 
-    def _epoch_train(self, dataloader: torch.utils.data.Dataloader):
+    def _epoch_train(self, dataloader: torch.utils.data.DataLoader):
         """
         Training step in epoch
 
         Args:
-            dataloader (torch.utils.data.Dataloader): Dataloader
+            dataloader (torch.utils.data.DataLoader): Dataloader
         """
         self.model.train()
         running_loss = []
@@ -124,12 +124,12 @@ class Trainer:
         epoch_loss = np.mean(running_loss)
         self.loss["train"].append(epoch_loss)
 
-    def _epoch_eval(self, dataloader: torch.utils.data.Dataloader):
+    def _epoch_eval(self, dataloader: torch.utils.data.DataLoader):
         """
         Evaluation step in epoch
 
         Args:
-            dataloader (torch.utils.data.Dataloader): Dataloader
+            dataloader (torch.utils.data.DataLoader): Dataloader
         """
         self.model.eval()
         running_loss = []

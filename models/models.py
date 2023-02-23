@@ -1,8 +1,10 @@
+from models.backbones import BackboneModel_FPN, BackboneModel, ConvBlock, HighLowFeauturesBck
+from models.heads import SimpleHead_FPN, SimpleHead5, PredictionHead, SimpleHead_trans, Waterfall, DeconvolutionLayer, Encoder
+from config import MODEL_NEURONS
 import torch
 import torch.nn as nn
-from config import MODEL_NEURONS
-from models.heads import SimpleHead_FPN, SimpleHead5, PredictionHead, SimpleHead_trans, Waterfall, DeconvolutionLayer, Encoder
-from models.backbones import BackboneModel_FPN, BackboneModel, ConvBlock, HighLowFeauturesBck
+import sys
+sys.path.append("../")
 
 
 class EfficientWaterfall(nn.Module):

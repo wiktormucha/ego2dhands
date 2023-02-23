@@ -21,7 +21,7 @@ from utils.utils import project_points_3D_to_2D, heatmaps_to_coordinates
 from datasets.h2o import H2O_Dataset
 import pandas as pd
 import tqdm
-from datasets.h2o import cam_instr, get_instr
+from datasets.h2o import get_instr
 from utils.egocentric import run_model_on_hands
 
 IMAGE_N = 10  # Index of image to see
@@ -172,7 +172,7 @@ for idx in range(0, 700):
     gts = hands_dict['gt']
     hand_label = hands_dict['hand_type']
 
-    pred = run_model_on_hands(model, imgs, gts, hand_label)
+    pred = run_model_on_hands(model, imgs)
 
     gts0 = np.reshape(gts[0], (1, 21, 2))
     gts1 = np.reshape(gts[1], (1, 21, 2))

@@ -2,6 +2,8 @@ from torch.utils.data import Dataset
 import numpy as np
 import os
 from PIL import Image
+import sys
+sys.path.append("../")
 
 
 def get_instr(arr: np.array) -> np.array:

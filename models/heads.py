@@ -1,6 +1,10 @@
-import torch
+import sys
 import torch.nn as nn
-from backbones import ConvBlock
+import torch
+from models.backbones import ConvBlock
+sys.path.append("../")
+
+# from backbones import ConvBlock
 
 
 class DeconvolutionLayer(nn.Module):
